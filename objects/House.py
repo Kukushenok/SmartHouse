@@ -13,19 +13,31 @@ class House():
         icon_list = ["signalization.png","ventilation.png","condition.png","light.png","sauna.png"]
         on_offs_list = [self.signalisation, self.ventilation, self.condition, self.light, self.sauna_on]
         callings = ["signalisation","ventilation","condition","light","sauna"]
+        ru_callings = ["сигнализация","вентиляция","кондиционер","свет","сауна"]
+        speeds = [7,7,11,5,15]
+        womanity_list = [True,True,False,False,True]
         self.command_list = []
         for i in range(5):
-            self.command_list.append(objects.Command.Command(icon_list[i],on_offs_list[i],callings[i]))
+            cmd = objects.Command.Command(icon_list[i],on_offs_list[i],callings[i])
+            cmd.speed = speeds[i]
+            cmd.ru_calling = ru_callings[i]
+            cmd.woman = womanity_list[i]
+            self.command_list.append(cmd)
     def call(self,calling):
-        for e in self.command_list: e.check_calling(calling)
+        for e in self.command_list:e.check_calling(calling)
+    def callback(self):
+        callback = ""
+        for e in self.command_list:
+            if not callback: callback = e.check_callback()
+        if callback: return callback
     def draw(self):
-
         result = pygame.image.load(os.path.join(os.getcwd(),"resources","images","house.jpg"))
         for i in range(5):
+            self.command_list[i].update()
             icon = pygame.image.load(os.path.join(os.getcwd(),"resources","images",self.command_list[i].image))
             work = pygame.image.load(os.path.join(os.getcwd(),"resources","images","on.png" if self.command_list[i] else "off.png"))
-            work.blit(pygame.transform.scale(icon,(work.get_rect().width//2,work.get_rect().height//2)),(work.get_rect().width//2-icon.get_rect().width//4,work.get_rect().height//2-icon.get_rect().height//4))
-            result.blit(pygame.transform.scale(work,(50,50)),(result.get_rect().width-50,50*i))
+            work.blit(pygame.transform.scale(icon,(work.get_rect().width//2,work.get_rect().height//2)),(work.get_rect().width//2-work.get_rect().width//4,work.get_rect().height//2-work.get_rect().height//4))
+            result.blit(pygame.transform.scale(work,(50,50)),(result.get_rect().width-50,55*i))
         return result
     def colder(self):
         self.temperature_mode-=5
