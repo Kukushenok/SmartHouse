@@ -1,18 +1,31 @@
 # Импортируем необходимые классы.
 from telegram.ext import Updater, MessageHandler, Filters , CommandHandler,ConversationHandler
 from telegram import ReplyKeyboardMarkup , ReplyKeyboardRemove
-from watson_developer_cloud import AssistantV1
+import watson_developer_cloud
 import os
 import objects.House
 import pygame
 import tools.config
 messager = {}
 def main():
+    assistant = watson_developer_cloud.AssistantV1(
+        username='d9a6b2ae-44fd-4cb4-9602-95a3cc357363',
+        password='Rxs5YCzznkbY',
+        version='2018-02-16'
+    )
+
+
     config = tools.config.Config(False,os.getcwd())
     house = objects.House.House()
     def chat_handler(bot, updater,user_data):
         global messager
-        house.call(updater.message.text)
+        response = assistant.message(
+            workspace_id='adcfa951-1a99-4127-bfbc-e09101075716',
+            input={
+                'text': updater.message.text
+            }
+        )
+        if response["intents"]: house.call(response["intents"][0]["intent"])
         messager = updater
 
     updater = Updater(config.get("botKey"))
