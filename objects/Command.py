@@ -17,7 +17,8 @@ class Command():
             if self.future_variable == self.variable:
                 self.frame = 0
                 self.future_variable = "None"
-                self.callback = self.ru_calling[0].upper()+self.ru_calling[1:]+("была уже включена" if self.woman else "был уже включён") if self.variable else ("была уже выключена" if self.woman else "был уже выключен")
+                self.callback = self.ru_calling[0].upper()+self.ru_calling[1:]+" "
+                self.callback +=("была уже включена" if self.woman else "был уже включён") if self.variable else ("была уже выключена" if self.woman else "был уже выключен")
     def check_callback(self):
         if self.callback:
             res = self.callback

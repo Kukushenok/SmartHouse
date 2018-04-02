@@ -40,10 +40,10 @@ def main():
     size = width, height = 800,600
     screen = pygame.display.set_mode(size)
     running = True
-    fps = 30
+    fps = 1
     clock = pygame.time.Clock()
     while running:
-        screen.blit(house.draw(),(0,0))
+        screen.blit(house.draw(1/fps),(0,0))
         pygame.display.flip()
         callback = house.callback()
         if callback and messager:
