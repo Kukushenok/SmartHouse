@@ -32,22 +32,21 @@ def main():
 
     # Получаем из него диспетчер сообщений.
     dp = updater.dispatcher
-
     dp.add_handler(MessageHandler(Filters.text,chat_handler,pass_user_data=True))
     # Запускаем цикл приема и обработки сообщений.
     updater.start_polling()
     #updater.idle()
     size = width, height = 800,600
-    screen = pygame.display.set_mode(size)
+    screen = pygame.display.set_mode(size,pygame.DOUBLEBUF)
     running = True
-    fps = 1
+    fps = 2
     clock = pygame.time.Clock()
     while running:
         screen.blit(house.draw(1/fps),(0,0))
         pygame.display.flip()
-        callback = house.callback()
-        if callback and messager:
-            messager.message.reply_text(callback)
+        #callback = house.callback()
+        #if callback and messager:
+        #    messager.message.reply_text(callback)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
