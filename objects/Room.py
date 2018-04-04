@@ -4,6 +4,8 @@ class Room:
     def __init__(self,name):
         self.images = {}
         self.name = name
+        self.ru_name = ""
+        self.ru_name_cased = ""
         self.cold_transparency = 0
         self.hot_transparency = 0
         self.light_transparency = 100
@@ -31,31 +33,40 @@ class Room:
                 self.cold_transparency += (self.job["transparency_set_to"]-self.job["transparency_was"])/self.job["total_time"]*tick
             elif self.job["type"] == "temperature":
                 self.temperature += (self.job["transparency_set_to"] - self.job["transparency_was"]) / self.job["total_time"]*tick
-                if self.temperature<22:
-                    self.cold_transparency = abs((22-self.temperature)*5)
+                if self.job["transparency_set_to"] < self.job["transparency_was"]:
+                    self.cold_transparency = (self.job["total_time"]-self.job["time"])/self.job["total_time"]*127
                     self.hot_transparency = 0
                 else:
-                    self.hot_transparency = (self.temperature-22)*5
+                    self.hot_transparency = (self.job["total_time"]-self.job["time"])/self.job["total_time"]*127
                     self.cold_transparency = 0
 
             self.job["time"] -= tick
-            print(self.job["time"]<=0)
-            if self.job["time"] <=0: self.job = None
+            if self.job["time"] <=0:
+                context = self.job["context"]
+                if self.job["type"] == "temperature":
+                    self.cold_transparency = 0
+                    self.hot_transparency = 0
+                    self.temperature = int(self.job["transparency_set_to"])
+                self.job = None
+                return context+self.ru_name_cased
 
-    def set_transparency(self,type,set_to,time=0):
-        self.job = {"time": time, "type": type, "transparency_set_to": set_to, "transparency_was": 0,"total_time": time}
+
+    def set_transparency(self,type,set_to,time=0,context = ""):
+        self.job = {"time": time, "type": type, "transparency_set_to": set_to, "transparency_was": 0,"total_time": time,"context":context}
         if type == "light": self.job["transparency_was"] = self.light_transparency
         elif type == "hot": self.job["transparency_was"] = self.hot_transparency
         elif type == "cold":self.job["transparency_was"] = self.cold_transparency
         elif type == "temperature": self.job["transparency_was"] = self.temperature
     def draw(self,surface,tick):
-        self.update(tick)
+        callback=self.update(tick)
         pygame.font.init()
         myfont = pygame.font.SysFont('Comic Sans MS', 30)
-        textsurface = myfont.render(str(int(self.temperature))+"°", False, pygame.Color("red") if self.temperature<22 else pygame.Color("blue"))
+        color = pygame.Color("black")
+        if self.job and self.job["transparency_was"]>self.job["transparency_set_to"] and self.job["type"] == "temperature": color = pygame.Color("yellow")
+        textsurface = myfont.render(str(int(self.temperature))+"°", False, color)
         res = surface.copy()
         self.blit_alpha(res, self.images["light"], (0, 0), self.light_transparency)
         self.blit_alpha(res, self.images["hot"], (0, 0), self.hot_transparency)
         self.blit_alpha(res, self.images["cold"], (0, 0), self.cold_transparency)
         res.blit(textsurface,self.text_pos)
-        return res
+        return res,callback
