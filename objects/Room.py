@@ -12,6 +12,7 @@ class Room:
         self.job= {}
         self.temperature = 0
         self.text_pos = []
+
         for e in ["light","cold","hot"]:
             self.images[e] = pygame.image.load(os.path.join(os.getcwd(), "resources", "images", self.name+"-"+e+".png"))
 
@@ -23,6 +24,7 @@ class Room:
         temp.blit(source, (0, 0))
         temp.set_alpha(opacity)
         target.blit(temp, location)
+
     def update(self,tick):
         if self.job:
             if self.job["type"] == "light":
@@ -57,6 +59,7 @@ class Room:
         elif type == "hot": self.job["transparency_was"] = self.hot_transparency
         elif type == "cold":self.job["transparency_was"] = self.cold_transparency
         elif type == "temperature": self.job["transparency_was"] = self.temperature
+
     def draw(self,surface,tick):
         callback=self.update(tick)
         pygame.font.init()

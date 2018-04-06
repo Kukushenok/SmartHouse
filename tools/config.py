@@ -3,6 +3,7 @@ import os
 class Config():
     def __init__(self,defaultPath = None,path = None):
         self.defaultPath = defaultPath
+        self.path = path
         self.config = configparser.ConfigParser()
         self.defaultConfig = configparser.ConfigParser()
         if path:
@@ -16,15 +17,11 @@ class Config():
             return self.config["SETTINGS"][item]
         except KeyError:
             return self.defaultConfig["SETTINGS"][item]
-    def getAsDict(self,item):
-        toDict = ""
-        try:
-            toDict = self.config["SETTINGS"][item]
-        except KeyError:
-            toDict =  self.defaultConfig["SETTINGS"][item]
-        dictPairs = toDict.split(",")
-        resDict = {}
-        for e in dictPairs:
-            splittedE = e.split(":")
-            exec("resDict["+splittedE[0]+"] = "+splittedE[1])
-        return resDict
+    def getAsList(self,item):
+        res = []
+        for e in self.config["SETTINGS"][item].split(","):
+            res.append(e)
+        return res
+    def SaveChanges(self):
+        with open(os.path.join(self.path,'config.ini'), 'w') as configfile:
+            self.config.write(configfile)

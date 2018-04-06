@@ -43,18 +43,27 @@ class House():
         if calling["intent"]["type"] == "light_on":
             for room in self.rooms:
                 if room.ru_name == calling["params"]["roomid"]["value"]:
-                    room.set_transparency("light",0,3,"Включён свет ")
-                    break
+                    if not room.job:
+                        room.set_transparency("light",0,3,"Включён свет ")
+                        break
+                    else:
+                        return "Busy"
         elif calling["intent"]["type"] == "light_off":
             for room in self.rooms:
                 if room.ru_name == calling["params"]["roomid"]["value"]:
-                    room.set_transparency("light",100,3,"Выключен свет ")
-                    break
+                    if not room.job:
+                        room.set_transparency("light",100,3,"Выключен свет ")
+                        break
+                    else:
+                        return "Busy"
         elif calling["intent"]["type"] == "set_temperature":
             for room in self.rooms:
                 if room.ru_name == calling["params"]["roomid"]["value"]:
-                    room.set_transparency("temperature",int(calling["params"]["sys-number"]["value"]),int(calling["params"]["sys-number"]["value"])/3,"Установлена температура "+calling["params"]["sys-number"]["value"]+"° ")
-                    break
+                    if not room.job:
+                        room.set_transparency("temperature",int(calling["params"]["sys-number"]["value"]),int(calling["params"]["sys-number"]["value"])/3,"Установлена температура "+calling["params"]["sys-number"]["value"]+"° ")
+                        break
+                    else:
+                        return "Busy"
     def draw(self,tick):
         result = pygame.image.load(os.path.join(os.getcwd(),"resources","images","house.jpg"))
         #for i in range(5):
