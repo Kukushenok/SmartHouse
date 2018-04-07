@@ -7,6 +7,8 @@ import objects.Manager
 import pygame
 messager = {}
 calling = {}
+context = {}
+
 def main():
     print("Запускаем программу...")
     users = 0
@@ -38,29 +40,28 @@ def main():
                                    'О! Начнём с Вас! Скажите мне пароль, и я впущу Вас :D')
 
     def chat_handler(bot, updater,user_data):
-        global messager,calling
+        print("Получаем из телеграмма: " + updater.message.text)
+        global messager,calling,context
         if not objects.Manager.Manager.getPassHandler().CheckOnWhitelist(updater["message"]["chat"]["username"]):
             updater.message.reply_text("Вас нет в белом списке, Вы не можете войти")
             return None
-        print(updater.message.text)
+        print("Отправляем Ватсону: " + updater.message.text)
         response = assistant.message(
             workspace_id='adcfa951-1a99-4127-bfbc-e09101075716',
             input={
                 'text': updater.message.text
-            }
+            },
+            context=context
         )
-        response = assistant.message(
-            workspace_id="adcfa951-1a99-4127-bfbc-e09101075716",
-            input={
-                'text': ''
-            }
-        )
+        context = response['context']
+        print("Получаем из Ватсона: " + str(response))
         if user_data.get("logged_in"):
             for output in response["output"]["text"]:
+                print("Отправляем телеграмму: "+output)
                 updater.message.reply_text(output)
                 if output[:3] == "Поп":
                     calling["ready"] = True
-            calling["ready"] = False
+          #  calling["ready"] = False
             if response["intents"] and response["intents"][0]["intent"] == "log_out":
                 updater.message.reply_text(response["output"]["text"][0])
                 user_data["logged_in"] = False
@@ -90,17 +91,21 @@ def main():
                 user_data["attempts"] = int(objects.Manager.Manager.getConfig().get("maxAttemps"))
                 user_data["pass_input"] = True
                 print(updater["message"]["chat"]["username"] + " пытается войти в систему")
+                print("Отправляем телеграмму: " + response["output"]["text"][0])
                 updater.message.reply_text(response["output"]["text"][0])
             elif not response["intents"]:
                 if objects.Manager.Manager.getPassHandler().LogIn(updater.message.text):
                     user_data["logged_in"] = True
                     user_data["pass_input"] = False
+                    print("Отправляем телеграмму: Вы вошли в систему!")
                     updater.message.reply_text("Вы вошли в систему!")
                     print(updater["message"]["chat"]["username"] + " вошёл в систему")
                     objects.Manager.Manager.getUsers().add_user(updater["message"]["chat"]["username"])
                     return None
                 elif user_data.get("attempts") and user_data["attempts"] > 1 and user_data["pass_input"]:
                     user_data["attempts"] -=1
+                    print("Отправляем телеграмму: "+ "Неверный пароль! У вас осталось до иcключения из белого списка попыток: " + str(
+                        user_data["attempts"]))
                     updater.message.reply_text("Неверный пароль! У вас осталось до иcключения из белого списка попыток: "+str(user_data["attempts"]))
                 elif user_data["pass_input"]:
                     objects.Manager.Manager.getPassHandler().whitelist.pop(objects.Manager.Manager.getPassHandler().whitelist.index(updater["message"]["chat"]["username"]))
@@ -108,6 +113,7 @@ def main():
                     whitelist.pop(whitelist.index(updater["message"]["chat"]["username"]))
                     objects.Manager.Manager.getConfig().config["SETTINGS"]["whitelist"] = ",".join(whitelist)
                     objects.Manager.Manager.getConfig().SaveChanges()
+                    print("Отправляем телеграмму: Неверный пароль! Вы были удалены из белого списка...")
                     updater.message.reply_text("Неверный пароль! Вы были удалены из белого списка...")
                     print("ВНИМАНИЕ. "+updater["message"]["chat"]["username"]+" был удалён из белого списка за сомнительное количество попыток входа.")
 
@@ -127,7 +133,12 @@ def main():
     running = True
     fps = 2
     clock = pygame.time.Clock()
-
+    response = assistant.message(
+        workspace_id="adcfa951-1a99-4127-bfbc-e09101075716",
+        input={
+            'text': ''
+        }
+    )
     print("ОК!")
     while running:
         callback = objects.Manager.Manager.getHouse().draw(1/fps)
