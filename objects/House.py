@@ -1,41 +1,82 @@
 import pygame
 import os
 import objects.Command
+import objects.Room
+import objects.Signaling
 class House():
-    def __init__(self):
-        self.main_door_open = False
-        self.ventilation = False
-        self.condition = False
-        self.temperature_mode = 20
-        self.sauna_on = False
-        self.light = False
-        self.signalisation = True
-        icon_list = ["signalization.png","ventilation.png","condition.png","light.png","sauna.png"]
-        on_offs_list = [self.signalisation, self.ventilation, self.condition, self.light, self.sauna_on]
-        callings = ["signalisation","ventilation","condition","light","sauna"]
-        self.command_list = []
-        for i in range(5):
-            self.command_list.append(objects.Command.Command(icon_list[i],on_offs_list[i],callings[i]))
-    def call(self,calling):
-        for e in self.command_list: e.check_calling(calling)
-    def draw(self):
 
+    def __init__(self):
+        rooms = ["bath","bedroom2","kitchen","corridor","bedroom1","boiler"]
+        ru_rooms = ["ванная","детская","гостиная","коридор","спальня","бойлерная"]
+        ru_rooms_cased = ["в ванной","в детской","в гостиной","в коридоре","в спальне","в бойлерной"]
+        coords = [(200,150),(450,130),(550,300),(400,200),(300,80),(150,220)]
+        self.rooms = []
+        self.signalization = objects.Signaling.Signaling()
+        for i in range(6):
+            added_room = objects.Room.Room(rooms[i])
+            added_room.text_pos=coords[i]
+            added_room.temperature = 22
+            added_room.ru_name = ru_rooms[i]
+            added_room.ru_name_cased = ru_rooms_cased[i]
+            self.rooms.append(added_room)
+
+    def call(self,calling,user):
+        #print(calling)
+        if not calling["ready"]: return None
+
+        if calling["intent"]["type"] == "light_on":
+            for room in self.rooms:
+                if room.ru_name == calling["params"]["roomid"]["value"]:
+                    if not room.job:
+                        if room.light_transparency == 0:
+                            return "Свет уже включён."
+                        room.set_transparency("light",0,3,"Включён свет ",user)
+                        break
+                    else:
+                        return "Busy"
+
+        elif calling["intent"]["type"] == "light_off":
+            for room in self.rooms:
+                if room.ru_name == calling["params"]["roomid"]["value"]:
+                    if not room.job:
+                        if room.light_transparency == 100:
+                            return "Свет уже выключен"
+                        room.set_transparency("light",100,3,"Выключен свет ",user)
+                        break
+                    else:
+                        return "Busy"
+
+        elif calling["intent"]["type"] == "set_temperature":
+            for room in self.rooms:
+                if room.ru_name == calling["params"]["roomid"]["value"]:
+                    if not room.job:
+                        if room.temperature == int(calling["params"]["sys-number"]["value"]):
+                            return "Температура уже такая"
+                        if int(calling["params"]["sys-number"]["value"]) > 40:
+                            return "So hot"
+                        elif int(calling["params"]["sys-number"]["value"]) < 10:
+                            return "So cold"
+                        room.set_transparency("temperature",int(calling["params"]["sys-number"]["value"]),abs(int(calling["params"]["sys-number"]["value"])-room.temperature),"Установлена температура "+calling["params"]["sys-number"]["value"]+"° ",user)
+                        break
+                    else:
+                        return "Busy"
+        elif calling["intent"]["type"] == "signaling_on":
+            if not self.signalization.job:
+                if self.signalization.transparency == 100:
+                    return "Сигнализация уже включена"
+                self.signalization.set_transparency(100,3,"включена",user)
+            else: return "Busy"
+        elif calling["intent"]["type"] == "signaling_off":
+            if not self.signalization.job:
+                if self.signalization.transparency == 0:
+                    return "Сигнализация уже выключена"
+                self.signalization.set_transparency(0,3,"выключена",user)
+            else: return "Busy"
+
+    def draw(self,tick):
         result = pygame.image.load(os.path.join(os.getcwd(),"resources","images","house.jpg"))
-        for i in range(5):
-            icon = pygame.image.load(os.path.join(os.getcwd(),"resources","images",self.command_list[i].image))
-            work = pygame.image.load(os.path.join(os.getcwd(),"resources","images","on.png" if self.command_list[i] else "off.png"))
-            work.blit(pygame.transform.scale(icon,(work.get_rect().width//2,work.get_rect().height//2)),(work.get_rect().width//2-icon.get_rect().width//4,work.get_rect().height//2-icon.get_rect().height//4))
-            result.blit(pygame.transform.scale(work,(50,50)),(result.get_rect().width-50,50*i))
-        return result
-    def colder(self):
-        self.temperature_mode-=5
-        if self.temperature_mode<10:
-            self.temperature_mode = 10
-            return "Отклонено в связи безопасности"
-        return "Текущая температура: "+str(self.temperature_mode)
-    def hotter(self):
-        self.temperature_mode+=5
-        if self.temperature_mode>30:
-            self.temperature_mode = 30
-            return "Отклонено в связи безопасности"
-        return "Текущая температура: " + str(self.temperature_mode)
+        callback = None
+        for room in self.rooms: result = room.draw(result,tick)
+        result = self.signalization.draw(result, tick)
+        pygame.image.save(result,os.path.join(os.getcwd(),"house.png"))
+        return result,callback
