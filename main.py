@@ -31,12 +31,11 @@ def main():
         print(updater["message"]["chat"]["username"] + " пытается войти в систему")
         updater.message.reply_text('Добро пожаловать в систему "Умный дом"! \n'
                                    'Мне можно задавать команды на "человеческом" языке! \n'
-                                   'Функционал дома:\n'
+                                   'Функционал дома\n'
                                    'В доме 6 зон: коридор, зал (гостиная),спальня, детская, бойлерная и ванная.\n'
-                                   'В них можно либо включить/выключить свет, либо установить температуру.\n'
-                                   'Также можно поставить дом на охрану (включить сигнализацию).\n'
-                                   'Систему "Умный дом" легко настроить: если Вам надо добавить других жильцов дома, просто впишите в этот список! \n'
-                                   'Конечно, им нужно сказать пароль, чтобы войти...\n'
+                                   'В них можно включить/выключить свет, установить температуру, поставить дом на охрану (включить сигнализацию).\n'
+                                   'Для доступа к системе "Умный дом" необходимо иметь пароль. Если у Вас его нет - обратитесь к владельцу дома.\n'
+                                   '\n'
                                    'Давайте начнём! Скажите мне пароль, и я впущу Вас :D')
 
     def chat_handler(bot, updater,user_data):
@@ -46,7 +45,7 @@ def main():
         if not objects.Manager.Manager.getPassHandler().CheckOnWhitelist(updater["message"]["chat"]["username"]):
             updater.message.reply_text("Вас нет в белом списке, Вы не можете войти")
             return None
-        #print("Отправляем Ватсону: " + updater.message.text)
+        print("Отправляем Ватсону: " + updater.message.text)
         response = assistant.message(
             workspace_id='adcfa951-1a99-4127-bfbc-e09101075716',
             input={
@@ -54,7 +53,7 @@ def main():
             },
             context=user_data.get("context",{})
         )
-        #print("Получаем из Ватсона: " + str(response))
+        print("Получаем из Ватсона: " + str(response))
         user_data["context"] = response['context']
         if response["intents"] and response["intents"][0]["intent"] == "cancel":
             updater.message.reply_text("Отменено.")
@@ -87,12 +86,11 @@ def main():
                 bot.send_photo(chat_id=updater.message.chat.id,
                                photo=open(os.path.join(os.getcwd(), "house.png"), 'rb'))
             if calling["intent"]["type"] == "log_out":
-                updater.message.reply_text(response["output"]["text"][0])
                 user_data["logged_in"] = False
                 objects.Manager.Manager.getUsers().remove_user(updater["message"]["chat"]["username"])
                 user_data["context"] = {}
                 return None
-            #print(response)
+            print(response)
             fast_callback = objects.Manager.Manager.getHouse().call(calling,updater["message"]["chat"]["username"])
             if fast_callback == "Busy": updater.message.reply_text("Простите, но данный запрос был отклонён из-за посторонней операцией над этой комнатой")
             elif fast_callback == "So hot": updater.message.reply_text("Отклонено в связи c безопасностью, слишком горячо.\n"

@@ -13,8 +13,8 @@ class Users():
         print(text)
         for user in self.users:
             if user["nickname"] == nickname:
-
                 user["messager"].message.reply_text(text)
+                return None
     def render(self,screen):
         pygame.font.init()
         myfont = pygame.font.SysFont('Comic Sans MS', 10)
