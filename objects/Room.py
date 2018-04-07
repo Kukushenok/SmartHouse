@@ -1,5 +1,6 @@
 import pygame
 import os
+import objects.Manager
 class Room:
     def __init__(self,name):
         self.images = {}
@@ -49,19 +50,22 @@ class Room:
                     self.cold_transparency = 0
                     self.hot_transparency = 0
                     self.temperature = int(self.job["transparency_set_to"])
+                elif self.job["type"] == "light":
+                    self.light_transparency = int(self.job["transparency_set_to"])
+                objects.Manager.Manager.getUsers().white_to_user(self.job["user"],context+self.ru_name_cased)
                 self.job = None
-                return context+self.ru_name_cased
 
 
-    def set_transparency(self,type,set_to,time=0,context = ""):
-        self.job = {"time": time, "type": type, "transparency_set_to": set_to, "transparency_was": 0,"total_time": time,"context":context}
+    def set_transparency(self,type,set_to,time=0,context = "",user = ""):
+
+        self.job = {"time": time, "type": type, "transparency_set_to": set_to, "transparency_was": 0,"total_time": time,"context":context,"user":user}
         if type == "light": self.job["transparency_was"] = self.light_transparency
         elif type == "hot": self.job["transparency_was"] = self.hot_transparency
         elif type == "cold":self.job["transparency_was"] = self.cold_transparency
         elif type == "temperature": self.job["transparency_was"] = self.temperature
 
     def draw(self,surface,tick):
-        callback=self.update(tick)
+        self.update(tick)
         pygame.font.init()
         myfont = pygame.font.SysFont('Comic Sans MS', 30)
         color = pygame.Color("black")
@@ -72,4 +76,4 @@ class Room:
         self.blit_alpha(res, self.images["hot"], (0, 0), self.hot_transparency)
         self.blit_alpha(res, self.images["cold"], (0, 0), self.cold_transparency)
         res.blit(textsurface,self.text_pos)
-        return res,callback
+        return res
